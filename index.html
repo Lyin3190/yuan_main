@@ -159,7 +159,7 @@
 <div class="px-4 py-2 bg-white/40 rounded-full border border-primary/10 text-on-surface-variant">Kafka</div>
 <div class="px-4 py-2 bg-white/40 rounded-full border border-primary/10 text-on-surface-variant flex items-center justify-center gap-2">
 <span class="material-symbols-outlined text-sm"></span>
-                        Function Calling
+                        Function
                     </div>
 </div>
 </div>
@@ -196,13 +196,13 @@
 <!-- Chat Footer / Quick Actions -->
 <div class="p-8 space-y-4 bg-surface-container/30">
 <div class="flex flex-wrap gap-2">
-<button class="px-4 py-2 bg-white/60 hover:bg-primary/10 text-primary text-sm rounded-full transition-all border border-primary/10">你现在在做什么？</button>
-<button class="px-4 py-2 bg-white/60 hover:bg-primary/10 text-primary text-sm rounded-full transition-all border border-primary/10">你有哪些作品？</button>
-<button class="px-4 py-2 bg-white/60 hover:bg-primary/10 text-primary text-sm rounded-full transition-all border border-primary/10">怎么联系你？</button>
+<button class="px-4 py-2 bg-white/60 hover:bg-primary/10 text-primary text-sm rounded-full transition-all border border-primary/10" onclick="answerQuestion('你现在在做什么')">你现在在做什么？</button>
+<button class="px-4 py-2 bg-white/60 hover:bg-primary/10 text-primary text-sm rounded-full transition-all border border-primary/10" onclick="answerQuestion('你有哪些作品')">你有哪些作品？</button>
+<button class="px-4 py-2 bg-white/60 hover:bg-primary/10 text-primary text-sm rounded-full transition-all border border-primary/10" onclick="answerQuestion('怎么联系您')">怎么联系您？</button>
 </div>
 <div class="relative">
 <input class="w-full bg-surface-container-high border-none rounded-xl px-6 py-4 focus:ring-2 focus:ring-primary/20 transition-all placeholder:text-outline-variant" placeholder="输入你的问题..." type="text"/>
-<button class="absolute right-3 top-1/2 -translate-y-1/2 w-10 h-10 bg-primary text-on-primary rounded-lg flex items-center justify-center hover:bg-primary-dim transition-colors">
+<button class="absolute right-3 top-1/2 -translate-y-1/2 w-10 h-10 bg-primary text-on-primary rounded-lg flex items-center justify-center hover:bg-primary-dim transition-colors" onclick="handleInputQuestion()">
 <span class="material-symbols-outlined">send</span>
 </button>
 </div>
@@ -224,3 +224,118 @@
 </div>
 </footer>
 </body></html>
+<script>
+// 1. 统一维护问答字典
+const answers = {
+    '你现在在做什么': '学习vibe coding',
+    '你有哪些作品': '个人数字分身对话系统https://yuanmain.edgeone.dev/',
+    '怎么联系您': '电话同微信'
+};
+
+// 2. 核心处理逻辑：提取生成气泡的公共部分
+function processChat(question) {
+    if (!question) return;
+
+    const chatBody = document.querySelector('.flex-grow.p-8.overflow-y-auto.space-y-6');
+
+    // 添加用户问题气泡
+    const userMessage = document.createElement('div');
+    userMessage.className = 'flex gap-4 items-start justify-end';
+    userMessage.innerHTML = `
+        <div class="bg-primary p-5 rounded-2xl rounded-tr-none shadow-sm max-w-[80%] border border-primary/5 text-on-primary">
+            <p>${question}</p>
+        </div>
+        <div class="w-10 h-10 rounded-full bg-primary-container flex items-center justify-center flex-shrink-0">
+            <span class="material-symbols-outlined text-primary text-xl" style="font-variation-settings: 'FILL' 1;">person</span>
+        </div>
+    `;
+    chatBody.appendChild(userMessage);
+
+    // 匹配答案（去除末尾的问号以便更好的模糊匹配）
+    const cleanQuestion = question.replace(/[?？]$/, '').trim();
+    // 匹配成功则返回答案，否则返回提示语
+    const reply = answers[cleanQuestion] || '暂时无法回答您的问题';
+
+    // 添加 AI 回答气泡
+    const botMessage = document.createElement('div');
+    botMessage.className = 'flex gap-4 items-start';
+    botMessage.innerHTML = `
+        <div class="w-10 h-10 rounded-full bg-primary-container flex items-center justify-center flex-shrink-0">
+            <span class="material-symbols-outlined text-primary text-xl" style="font-variation-settings: 'FILL' 1;">smart_toy</span>
+        </div>
+        <div class="bg-surface-container-lowest p-5 rounded-2xl rounded-tl-none shadow-sm max-w-[80%] border border-primary/5">
+            <p class="text-on-surface leading-relaxed">${reply}</p>
+        </div>
+    `;
+    chatBody.appendChild(botMessage);
+
+    // 滚动到底部
+    chatBody.scrollTop = chatBody.scrollHeight;
+}
+
+// 3. 点击预设问题（胶囊按钮）时触发
+// 请确保你的HTML按钮里绑定了 onclick="answerQuestion('对应的问题')"
+function answerQuestion(question) {
+    processChat(question);
+}
+
+// 4. 输入框点击发送时触发
+function handleInputQuestion() {
+    // 直接获取输入框，不依赖容器
+    const inputField = document.querySelector('input[placeholder="输入你的问题..."]');
+    
+    if (!inputField) {
+        console.error('找不到输入框');
+        return;
+    }
+    
+    const question = inputField.value.trim();
+    
+    if (!question) {
+        console.warn('输入框为空');
+        return;
+    }
+
+    console.log('发送问题:', question);
+    // 调用公共逻辑
+    processChat(question);
+
+    // 清空输入框
+    inputField.value = '';
+}
+
+// 5. 页面加载完成后绑定事件
+window.addEventListener('load', function() {
+    // 使用更精确的选择器找到输入框和发送按钮
+    const inputContainer = document.querySelector('div.relative');
+    
+    if (inputContainer) {
+        // 获取输入框
+        const inputField = inputContainer.querySelector('input[type="text"]');
+        // 获取发送按钮
+        const sendButton = inputContainer.querySelector('button');
+        
+        // 绑定发送按钮点击事件
+        if (sendButton) {
+            console.log('✓ 发送按钮已成功绑定');
+            sendButton.addEventListener('click', handleInputQuestion);
+        } else {
+            console.error('✗ 发送按钮未找到');
+        }
+        
+        // 绑定输入框回车事件
+        if (inputField) {
+            console.log('✓ 输入框已成功绑定');
+            inputField.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    handleInputQuestion();
+                }
+            });
+        } else {
+            console.error('✗ 输入框未找到');
+        }
+    } else {
+        console.error('✗ 无法找到输入框容器');
+    }
+});
+</script>
